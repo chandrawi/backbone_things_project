@@ -6,8 +6,7 @@ import time
 from datetime import datetime
 from uuid import UUID
 import grpc
-from rmcs_api_client.auth import Auth
-from rmcs_api_client.resource import Resource, DeviceSchema, Tag
+from bbthings_grpc import Auth, Resource, DeviceSchema, Tag
 import config
 
 
@@ -21,17 +20,15 @@ if len(sys.argv) > 2:
 # user login on local server
 address_auth = config.SERVER_LOCAL['address_auth']
 address_resource = config.SERVER_LOCAL['address_resource']
-auth = Auth(address_auth)
-login = auth.user_login(config.SERVER_LOCAL['admin_name'], config.SERVER_LOCAL['admin_password'])
-resource = Resource(address_resource, login.access_tokens[0].access_token)
+resource = Resource(address_resource)
+resource.login(address_auth, config.SERVER_LOCAL["admin_name"], config.SERVER_LOCAL["admin_password"])
 
-print("LOCAL LOGIN:")
-print("user_id       = {}".format(login.user_id))
-print("auth_token    = {}".format(login.auth_token))
-for token in login.access_tokens:
-    print("api_id        = {}".format(token.api_id))
-    print("access_token  = {}".format(token.access_token))
-    print("refresh_token = {}".format(token.refresh_token))
+print("LOGIN:")
+print("api_id        = {}".format(resource._api_id))
+print("user_id       = {}".format(resource.user_id))
+print("auth_token    = {}".format(resource.auth_token))
+print("access_token  = {}".format(resource.access_token))
+print("refresh_token = {}".format(resource.refresh_token))
 
 # Get RAW, DATA, and ANALISYS models
 models = resource.list_model_by_category("RAW")
@@ -77,8 +74,7 @@ while True:
         buffers = resource.list_buffer_group_first_offset(buffer_number, buffer_offset, device_map.keys(), None, Tag.TRANSFER_LOCAL)
     except grpc.RpcError as error:
         if error.code() == grpc.StatusCode.UNAUTHENTICATED:
-            login = auth.user_login(config.SERVER_LOCAL['admin_name'], config.SERVER_LOCAL['admin_password'])
-            resource = Resource(address_resource, login.access_tokens[0].access_token)
+            resource.login(address_auth, config.SERVER_LOCAL['admin_name'], config.SERVER_LOCAL['admin_password'])
             print("RELOGIN LOCAL")
         continue
 

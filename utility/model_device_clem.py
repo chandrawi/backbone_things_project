@@ -1,7 +1,7 @@
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
-from rmcs_api_client.resource import DataType
+from bbthings_grpc import DataType
 from utility.model_device import Model, ModelConfig, Type, Device, DeviceConfig, Group
 
 

@@ -2,8 +2,7 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 import uuid
-from rmcs_api_client.auth import Auth
-from rmcs_api_client.resource import Resource, DataType
+from bbthings_grpc import Auth, Resource, DataType
 import config
 
 from utility.model_device_lews import MODELS, TYPES, GATEWAY, DEVICES, GROUPS

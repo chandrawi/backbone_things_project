@@ -6,8 +6,7 @@ import time
 from datetime import datetime
 from uuid import UUID
 import grpc
-from rmcs_api_client.auth import Auth
-from rmcs_api_client.resource import Resource, DeviceSchema, Tag
+from bbthings_grpc import Auth, Resource, DeviceSchema, Tag
 import config
 
 
@@ -21,31 +20,26 @@ if len(sys.argv) > 2:
 # user login on local server
 address_auth = config.SERVER_LOCAL['address_auth']
 address_resource = config.SERVER_LOCAL['address_resource']
-auth = Auth(address_auth)
-login = auth.user_login(config.SERVER_LOCAL['admin_name'], config.SERVER_LOCAL['admin_password'])
-resource = Resource(address_resource, login.access_tokens[0].access_token)
+resource = Resource(address_resource)
+resource.login(address_auth, config.SERVER_LOCAL["admin_name"], config.SERVER_LOCAL["admin_password"])
 
 # user login on main server
 address_auth = config.SERVER_MAIN['address_auth']
 address_resource = config.SERVER_MAIN['address_resource']
-auth_main = Auth(address_auth)
-login_main = auth_main.user_login(config.SERVER_MAIN['admin_name'], config.SERVER_MAIN['admin_password'])
-resource_main = Resource(address_resource, login_main.access_tokens[0].access_token)
+resource_main = Resource(address_resource)
+resource_main.login(address_auth, config.SERVER_MAIN["admin_name"], config.SERVER_MAIN["admin_password"])
 
 print("LOCAL LOGIN:")
-print("user_id       = {}".format(login.user_id))
-print("auth_token    = {}".format(login.auth_token))
-for token in login.access_tokens:
-    print("api_id        = {}".format(token.api_id))
-    print("access_token  = {}".format(token.access_token))
-    print("refresh_token = {}".format(token.refresh_token))
+print("api_id        = {}".format(resource._api_id))
+print("user_id       = {}".format(resource.user_id))
+print("auth_token    = {}".format(resource.auth_token))
+print("access_token  = {}".format(resource.access_token))
+print("refresh_token = {}".format(resource.refresh_token))
 print("MAIN LOGIN:")
-print("user_id       = {}".format(login_main.user_id))
-print("auth_token    = {}".format(login_main.auth_token))
-for token in login_main.access_tokens:
-    print("api_id        = {}".format(token.api_id))
-    print("access_token  = {}".format(token.access_token))
-    print("refresh_token = {}".format(token.refresh_token))
+print("user_id       = {}".format(resource_main.user_id))
+print("auth_token    = {}".format(resource_main.auth_token))
+print("access_token  = {}".format(resource_main.access_token))
+print("refresh_token = {}".format(resource_main.refresh_token))
 
 # read devices on the gateways
 devices: list[DeviceSchema] = []
@@ -67,8 +61,7 @@ while True:
         buffers = resource.list_buffer_group_last_offset(buffer_number, buffer_offset, device_map.keys(), None, Tag.TRANSFER_SERVER)
     except grpc.RpcError as error:
         if error.code() == grpc.StatusCode.UNAUTHENTICATED:
-            login = auth.user_login(config.SERVER_LOCAL['admin_name'], config.SERVER_LOCAL['admin_password'])
-            resource = Resource(address_resource, login.access_tokens[0].access_token)
+            resource_main.login(address_auth, config.SERVER_LOCAL['admin_name'], config.SERVER_LOCAL['admin_password'])
             print("RELOGIN LOCAL")
         continue
 
@@ -86,8 +79,7 @@ while True:
             resource_main.create_buffer(buffer.device_id, buffer.model_id, buffer.timestamp, buffer.data, Tag.TRANSFER_LOCAL)
         except grpc.RpcError as error:
             if error.code() == grpc.StatusCode.UNAUTHENTICATED:
-                login_main = auth_main.user_login(config.SERVER_MAIN['admin_name'], config.SERVER_MAIN['admin_password'])
-                resource_main = Resource(address_resource, login_main.access_tokens[0].access_token)
+                resource_main.login(address_auth, address_auth, config.SERVER_MAIN['admin_name'], config.SERVER_MAIN['admin_password'])
                 print("RELOGIN MAIN")
                 break
             elif error.code() == grpc.StatusCode.UNAVAILABLE:

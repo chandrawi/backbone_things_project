@@ -6,8 +6,7 @@ import time
 from datetime import datetime
 import uuid
 from uuid import UUID
-from rmcs_api_client.auth import Auth
-from rmcs_api_client.resource import Resource, ModelSchema, TypeSchema
+from bbthings_grpc import Auth, Resource, ModelSchema, TypeSchema
 import config
 
 

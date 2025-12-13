@@ -5,8 +5,7 @@ import time
 from datetime import datetime
 from uuid import UUID
 import psycopg
-from rmcs_api_client.auth import Auth
-from rmcs_api_client.resource import Resource, ModelSchema, DeviceSchema, Tag
+from bbthings_grpc import Auth, Resource, ModelSchema, DeviceSchema, Tag
 import config
 
 

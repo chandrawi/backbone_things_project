@@ -1,7 +1,7 @@
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
-from rmcs_api_client.auth import Auth
+from bbthings_grpc import Auth
 import random
 import uuid
 from uuid import UUID

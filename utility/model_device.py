@@ -1,6 +1,6 @@
 from typing import Union, List
 from dataclasses import dataclass
-from rmcs_api_client.resource import DataType
+from bbthings_grpc import DataType
 
 @dataclass
 class ModelConfig:
