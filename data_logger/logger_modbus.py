@@ -56,10 +56,10 @@ for device in devices:
         for conf in device.configs:
             if conf.name == "slave_id":
                 slave_id = conf.value
-        for model_id in device.type.models:
+        for model_id in device.model_ids:
             model = resource.read_model(model_id)
             if model.category == "RAW" and slave_id != None:
-                device_map.append(DeviceMap(slave_id, device.id, model_id, device.type.name))
+                device_map.append(DeviceMap(slave_id, device.id, model_id, device.type_name))
 for device in device_map:
     print(device)
 

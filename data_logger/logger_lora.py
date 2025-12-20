@@ -131,11 +131,11 @@ for device in devices:
                 period = conf.value
             elif conf.name == "offset_time":
                 offset = conf.value
-        for model_id in device.type.models:
+        for model_id in device.model_ids:
             model = resource.read_model(model_id)
             if model.category == "RAW" and gateway_id != None and node_id != None and length != None and period != None and offset != None:
                 id = Id(gateway_id, node_id)
-                device_map[id] = DeviceMap(device.id, model_id, device.type.name, length, period, offset)
+                device_map[id] = DeviceMap(device.id, model_id, device.type_name, length, period, offset)
 for id, device in device_map.items():
     print("[{:3d},{:3d}]    {}".format(id.gateway, id.node, device))
 

@@ -1,4 +1,4 @@
-from rmcs_api_client.resource import Tag
+from bbthings_grpc import Tag
 
 DATABASE = {
     "url_auth" : "postgres://postgres:password@127.0.0.1:5432/test_rmcs_auth",
@@ -71,6 +71,8 @@ GATEWAY_ENVIRONMENT = {
         "address": 0x76
     }
 }
+
+INCLINOMETER_ARRAY_GROUP_ID = "00000000-0000-0000-0000-000000000000"
 
 GATEWAYS = []
 for k in GATEWAY_GENERATOR: GATEWAYS.append(k)

@@ -19,11 +19,12 @@ PROCEDURES_ADMIN = [
     "read_data", "create_data", "delete_data",
     "read_buffer", "create_buffer", "update_buffer", "delete_buffer",
     "read_slice", "create_slice", "update_slice", "delete_slice",
-    "read_log", "create_log", "update_log", "delete_log"
+    "read_log", "create_log", "update_log", "delete_log",
+    "get_access"
 ]
 PROCEDURES_USER = [
     "read_model", "read_model_config", "read_device", "read_device_config", "read_type", "read_group", "read_set",
-    "read_data", "read_buffer", "read_slice", "read_log"
+    "read_data", "read_buffer", "read_slice", "read_log", "get_access"
 ]
 PROCEDURES = set(PROCEDURES_ADMIN + PROCEDURES_USER)
 USER_ADMIN = [config.SERVER_LOCAL['admin_name'], config.SERVER_LOCAL['admin_password']]

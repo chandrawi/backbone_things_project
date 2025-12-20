@@ -44,7 +44,7 @@ model_data = models[0]
 devices_map: List[DeviceMap] = []
 group = resource.read_group_device(UUID(config.SOIL_INCLINOMETER_GROUP_ID))
 if group.name == "soil inclinometer":
-    if len(group.devices) == 0: 
+    if len(group.device_ids) == 0: 
         raise Exception("Group has no device")
     for device_id in group.devices:
         device = resource.read_device(device_id)

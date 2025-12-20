@@ -53,10 +53,10 @@ devices = resource.list_device_by_gateway(UUID(gateway_id))
 for device in devices:
     if device.id == device.gateway_id: # filter out gateway
         continue
-    for model_id in device.type.models:
+    for model_id in device.model_ids:
         model = resource.read_model(model_id)
         if model.category == "DATA":
-            device_map.append(DeviceMap(device.id, model_id, device.type.name))
+            device_map.append(DeviceMap(device.id, model_id, device.type_name))
 
 # Show devices
 print("DEVICES:")

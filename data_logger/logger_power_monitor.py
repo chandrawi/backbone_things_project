@@ -72,14 +72,14 @@ for conf in device_schema.configs:
         conv_avg = conf.value
     elif conf.name == "conversion_time":
         conv_time = conf.value
-for model_id in device_schema.type.models:
+for model_id in device_schema.model_ids:
     model = resource.read_model(model_id)
     if model.category == "DATA": break
 
 # Initialize INA3221 instance, data, and device map
 ina3221 = INA3221(address=address, bus=GATEWAY["bus"])
 data = INA3221Data(0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
-device = DeviceMap(device_schema.id, model_id, device_schema.type.name, ina3221, data)
+device = DeviceMap(device_schema.id, model_id, device_schema.type_name, ina3221, data)
 # Begin INA3221 sensor
 if not ina3221.begin():
     print("Could not connect. Fix and Reboot")

@@ -65,9 +65,10 @@ while True:
             print("RELOGIN LOCAL")
         continue
 
-    # Only transfer if number buffers is greater or equal than buffer_number
+    # Only transfer if number buffers is greater or equal than buffer_number and wait some moment
     if len(buffers) < buffer_number:
-        buffers =  []
+        time.sleep(config.TIMING['transfer_sleep'])
+        continue
 
     for buffer in buffers:
         time_str = buffer.timestamp.strftime("%Y-%m-%d %H:%M:%S")
@@ -101,5 +102,3 @@ while True:
                     resource.update_buffer(buffer.id, None, config.STATUS['transfer_server_end'])
             except grpc.RpcError as error:
                 print(error)
-
-    time.sleep(config.TIMING['transfer_sleep'])

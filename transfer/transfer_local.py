@@ -78,6 +78,11 @@ while True:
             print("RELOGIN LOCAL")
         continue
 
+    # wait some moment when buffer is unavailable
+    if len(buffers) == 0:
+        time.sleep(config.TIMING['transfer_sleep'])
+        continue
+
     for buffer in buffers:
         time_str = buffer.timestamp.strftime("%Y-%m-%d %H:%M:%S")
         print("{}    {}    {}".format(time_str, buffer.device_id, device_map[buffer.device_id]))
@@ -123,5 +128,3 @@ while True:
                 resource.update_buffer(buffer.id, None, status)
         except grpc.RpcError as error:
             print(error)
-
-    time.sleep(config.TIMING['transfer_sleep'])

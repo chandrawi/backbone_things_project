@@ -64,7 +64,7 @@ for device in devices:
                 lower_limits[conf.name] = conf.value
             elif "precission" in conf.name:
                 precissions[conf.name] = conf.value
-        for model_id in device.type.model_ids:
+        for model_id in device.model_ids:
             model = resource.read_model(model_id)
             if model.category == "GENERATOR":
                 upper_limits = list(dict(sorted(upper_limits.items())).values())
@@ -80,7 +80,7 @@ for device in devices:
                     precission = None
                     if len(precissions) > i: precission = precissions[i]
                     generators.append(Generator(upper_limit, lower_limit, precission))
-                device_map.append(DeviceMap(device.id, model_id, device.type.name, generators))
+                device_map.append(DeviceMap(device.id, model_id, device.type_name, generators))
 
 for device in device_map:
     print(device)

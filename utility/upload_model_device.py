@@ -46,12 +46,13 @@ model_ids = []
 type_ids = []
 types: list[TypeSchema] = []
 for device in devices:
-    for model_id in device.type.models:
+    for model_id in device.model_ids:
         if model_id not in model_ids and model_id != UUID(int=0):
             model_ids.append(model_id)
-    if device.type.id not in type_ids:
-        type_ids.append(device.type.id)
-        types.append(device.type)
+    if device.type_id not in type_ids:
+        type_ids.append(device.type_id)
+        type_schema = resource.read_type(device.type_id)
+        types.append(type_schema)
 
 # read data model, data types and configs
 models: list[ModelSchema] = []
@@ -79,12 +80,13 @@ for model in models:
 # create type and add type model on main server
 for type_ in types:
     resource_main.create_type(type_.id, type_.name, type_.description)
-    for model_id in type_.models:
-        if model_id != UUID(int=0):
-            resource_main.add_type_model(type_.id, model_id)
+    for model_id in type_.model_ids:
+        resource_main.add_type_model(type_.id, model_id)
+    for type_config in type_.configs:
+        resource_main.create_type_config(type_config.id, type_config.name, type_config.value_type, type_config.category)
 
 # create devices and configs on main server
 for device in devices:
-    resource_main.create_device(device.id, device.gateway_id, device.type.id, device.serial_number, device.name, device.description)
+    resource_main.create_device(device.id, device.gateway_id, device.type_id, device.serial_number, device.name, device.description)
     for conf in device.configs:
         resource_main.create_device_config(device.id, conf.name, conf.value, conf.category)
