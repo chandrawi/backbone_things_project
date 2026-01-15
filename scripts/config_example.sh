@@ -1,6 +1,6 @@
 #!/bin/bash
 
-BASE_PATH=/opt/rmcs-project
+BASE_PATH=/opt/backbone_things_project
 PYTHON_PATH="$BASE_PATH/.venv/bin/python"
 SERVER_ADDRESS="127.0.0.1"
 

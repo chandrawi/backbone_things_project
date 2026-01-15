@@ -3,10 +3,10 @@
 # load variables from configuration file
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 CONF_FILE="${SCRIPT_DIR}/config.sh"
-source $CONF_FILE
+source "$CONF_FILE"
 
 # get variables from argument to replace configuration variables
-while getopts u:p:b:e:t:d:D:M:a:r:X flag
+while getopts u:p:b:e:t:d:D:M:f:r:X flag
 do
 	case "${flag}" in
 		u) DB_URL=${OPTARG};;
@@ -17,7 +17,7 @@ do
 		d) BACKUP_DIRECTORY=${OPTARG};;
 		D) GROUP_DEVICE=${OPTARG};;
 		M) GROUP_MODEL=${OPTARG};;
-		t) TAG_FILTER=${OPTARG};;
+		f) TAG_FILTER=${OPTARG};;
 		r) REPLACE_TAG=${OPTARG};;
 		X) DELETE_FLAG=1;;
 	esac
@@ -36,8 +36,8 @@ BEGIN_SEC=$((END_SEC - BACKUP_PERIOD))
 # get begin and end datetime from arguments if meet the format
 regex='[0-9]{2}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}([-+][0-9]{4})?$'
 if [[ $INPUT_BEGIN =~ $regex && $INPUT_END =~ $regex ]]; then
-	BEGIN_SEC=$(date -d$INPUT_BEGIN +%s)
-	END_SEC=$(date -d$INPUT_END +%s)
+	BEGIN_SEC=$(date -d $INPUT_BEGIN +%s)
+	END_SEC=$(date -d $INPUT_END +%s)
 fi
 BEGIN=$(date +'%Y-%m-%dT%H:%M:%S%z' -d "@$BEGIN_SEC")
 END=$(date +'%Y-%m-%dT%H:%M:%S%z' -d "@$END_SEC")
@@ -46,7 +46,7 @@ END=$(date +'%Y-%m-%dT%H:%M:%S%z' -d "@$END_SEC")
 COLUMNS="\"device_id\",\"model_id\",\"timestamp\",\"tag\",\"data\""
 COL_TS="\"timestamp\""
 PREFIX="data"
-if [[ $REPLACE_TAG =~ ^[0-9]+$ ]]; then
+if [[ $REPLACE_TAG =~ ^-?[0-9]+$ ]]; then
 	COLUMNS="\"device_id\",\"model_id\",\"timestamp\",$REPLACE_TAG AS \"tag\",\"data\""
 fi
 QUERY="SELECT $COLUMNS FROM \"$BACKUP_TABLE\" WHERE \"timestamp\" >= '$BEGIN' AND \"timestamp\" < '$END'"
@@ -67,7 +67,7 @@ regex='[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit
 if [[ $GROUP_MODEL =~ $regex ]]; then
 	SUFFIX+="_M_$GROUP_MODEL"
 	# run a select query to get list of devices or models
-	RESULT=($(psql $DB_URL -AXqtc "SELECT \"model_id\" FROM \"group_model\" INNER JOIN \"group_model_map\" USING (\"group_id\") WHERE \"group_id\"='${GROUP_MODEL}';"))
+	RESULT=($(psql $DB_URL -AXqtc "SELECT \"model_id\" FROM \"group_model\" INNER JOIN \"group_model_member\" USING (\"group_id\") WHERE \"group_id\"='${GROUP_MODEL}';"))
 	# construct where clause query with array of devices or models
 	if [[ ${#RESULT[@]} -gt 0 ]]; then
 		for res in "${RESULT[@]}"; do MODEL_IDS+="'${res}',"; done
@@ -78,7 +78,7 @@ fi
 if [[ $GROUP_DEVICE =~ $regex ]]; then
 	SUFFIX+="_D_$GROUP_DEVICE"
 	# run a select query to get list of devices or models
-	RESULT=($(psql $DB_URL -AXqtc "SELECT \"device_id\" FROM \"group_device\" INNER JOIN \"group_device_map\" USING (\"group_id\") WHERE \"group_id\"='${GROUP_DEVICE}';"))
+	RESULT=($(psql $DB_URL -AXqtc "SELECT \"device_id\" FROM \"group_device\" INNER JOIN \"group_device_member\" USING (\"group_id\") WHERE \"group_id\"='${GROUP_DEVICE}';"))
 	# construct where clause query with array of devices or models
 	if [[ ${#RESULT[@]} -gt 0 ]]; then
 		for res in "${RESULT[@]}"; do DEVICE_IDS+="'${res}',"; done

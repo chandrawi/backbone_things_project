@@ -1,9 +1,9 @@
-DB_URL=postgres://postgres:db_password@localhost:5432/rmcs_resource
+DB_URL=postgres://postgres:db_password@localhost:5432/bbthings_resource
 BACKUP_PERIOD=3600
 BACKUP_TABLE=data
 BACKUP_DIRECTORY=/home/username/backup
 GROUP_DEVICE=
 GROUP_MODEL=
-ADD_STATUS=
-REPLACE_STATUS=
+TAG_FILTER=
+REPLACE_TAG=
 DELETE_FLAG=0

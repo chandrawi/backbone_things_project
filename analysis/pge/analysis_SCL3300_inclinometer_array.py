@@ -161,15 +161,15 @@ while True:
     last_angle_y = 0.0
     last_angle_z = 0.0
 
-    for i in range(number):
+    for i in range(number-1, -1, -1):
         angle_x = get_i16_value(buffer_set[i].data[0], device_set[i].offset_x) * (math.pi / 2) / 16384
         angle_y = get_i16_value(buffer_set[i].data[1], device_set[i].offset_y) * (math.pi / 2) / 16384
         angle_z = get_i16_value(buffer_set[i].data[2], device_set[i].offset_z) * (math.pi / 2) / 16384
         temperature = (get_i16_value(buffer_set[i].data[3], 0) / 18.9) - 273
 
-        if i > 0:
-            displacement_y = device_set[i].space * ((math.sin(last_angle_y) + math.sin(angle_y)) / 2)
-            displacement_z = device_set[i].space * ((math.sin(last_angle_z) + math.sin(angle_z)) / 2)
+        if i < (number-1):
+            displacement_y = displacement_y + device_set[i].space * ((math.sin(last_angle_y) + math.sin(angle_y)) / 2)
+            displacement_z = displacement_z + device_set[i].space * ((math.sin(last_angle_z) + math.sin(angle_z)) / 2)
         last_angle_y = angle_y
         last_angle_z = angle_z
 
