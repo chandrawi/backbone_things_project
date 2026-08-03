@@ -109,3 +109,11 @@ EXTERNAL_API = {
     "token": "CUNeYi2wBCFKtsC4CbVbiOnoeYY89yKC",
     "url": "http://batubara.koneksi.cloud:8080/api/v1/report-start-finish"
 }
+
+GENERATOR_CONFIG = {
+    "00000000-0000-0000-0000-000000000000": [{
+        "upper_limit": 0.0015,
+        "lower_limit": 0.0012,
+        "precission": 4
+    }]
+}
