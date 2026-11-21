@@ -31,6 +31,7 @@ if not LoRa.begin() :
 
 # Configure LoRa to use TCXO with DIO3 as control
 print("Set RF module to use TCXO as clock reference")
+LoRa.setDio2RfSwitch()
 LoRa.setDio3TcxoCtrl(LoRa.DIO3_OUTPUT_1_8, LoRa.TCXO_DELAY_10)
 
 # Set frequency to 915 Mhz
@@ -67,6 +68,18 @@ LoRa.setSyncWord(0x3444)
 
 print("\n-- LoRa Receiver --\n")
 
+periodTime = 60
+offsetTime = {
+    1: 2,
+    2: 4,
+    3: 6,
+    4: 8,
+    5: 10,
+    6: 12,
+    7: 14,
+    8: 16
+}
+
 # Receive message continuously
 while True :
 
@@ -80,17 +93,22 @@ while True :
         t = round(time.time())
         time_str = datetime.strftime(datetime.now(), "%Y-%m-%d %H:%M:%S")
         data = LoRa.read(LoRa.available())
+        # Get offset time of a node
+        offset = offsetTime.get(data[1], -1)
 
-        # Transmit timestamp to synchronize time
-        # if (t % 60) != 2:
+        # Transmit end command or timestamp to synchronize time
         LoRa.beginPacket()
-        LoRa.write(data[0])     # gateway id
-        LoRa.write(data[1])     # node id
-        LoRa.write(1)           # time synchronize code
-        LoRa.write((t >> 24) % 256)
-        LoRa.write((t >> 16) % 256)
-        LoRa.write((t >> 8) % 256)
-        LoRa.write(t % 256)
+        LoRa.write(data[0])         # gateway id
+        LoRa.write(data[1])         # node id
+        if t % periodTime == offset:
+            LoRa.write(0)           # end command code
+            LoRa.write((0, 0, 0, 0), 4)
+        else :
+            LoRa.write(1)           # time synchronize code
+            LoRa.write((t >> 24) % 256)
+            LoRa.write((t >> 16) % 256)
+            LoRa.write((t >> 8) % 256)
+            LoRa.write(t % 256)
         LoRa.endPacket()
         LoRa.wait()
 

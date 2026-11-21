@@ -75,6 +75,7 @@ if not LoRa.begin() :
     raise Exception("Something wrong, can't begin LoRa radio")
 
 # Setting LoRa modem configuration based on gateway setting in database
+LoRa.setDio2RfSwitch()
 print("Set RF module to use TCXO as clock reference")
 LoRa.setDio3TcxoCtrl(LoRa.DIO3_OUTPUT_1_8, LoRa.TCXO_DELAY_10)
 print("Set frequency to {} Mhz".format(GATEWAY['frequency']/1000000.0))
@@ -178,7 +179,7 @@ while True:
         timeNow = time.time()
         timeString = datetime.fromtimestamp(round(timeNow)).strftime('%Y-%m-%d %H:%M:%S')
 
-        # Filter unrecocognized node and get device configurations
+        # Filter unrecognized node and get device configurations
         if receive.id in device_map:
             device = device_map[receive.id]
             if len(receive.binary) != device.length:
@@ -213,7 +214,7 @@ while True:
 
         except grpc.RpcError as error:
             if error.code() == grpc.StatusCode.UNAUTHENTICATED:
-                login = auth.user_login(config.SERVER_LOCAL['admin_name'], config.SERVER_LOCAL['admin_password'])
+                login = resource.login(address_auth, config.SERVER_LOCAL['admin_name'], config.SERVER_LOCAL['admin_password'])
                 resource = Resource(address_resource, login.access_tokens[0].access_token)
                 print("RELOGIN LOCAL")
             else:

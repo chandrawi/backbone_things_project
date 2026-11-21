@@ -5,8 +5,7 @@ from dataclasses import dataclass
 import time
 from datetime import datetime
 from uuid import UUID
-import grpc
-from bbthings_grpc import Auth, Resource, DeviceSchema
+from bbthings_grpc import Resource
 import config
 import random
 
@@ -50,7 +49,7 @@ print("access_token  = {}".format(resource.access_token))
 print("refresh_token = {}".format(resource.refresh_token))
 
 # get generator limit and precission from config
-generators = config.GENERATOR_SPARING_CLEAN
+generators = config.GENERATOR_CONFIG
 
 # read devices associated with configured gateway
 device_map: list[DeviceMap] = []
@@ -58,23 +57,31 @@ devices = resource.list_device_by_gateway(UUID(gateway_id))
 for device in devices:
     if device.id == device.gateway_id: # filter out gateway
         continue
+    gens = []
+    if str(device.id) in generators:
+        for gen in generators[str(device.id)]:
+            gens.append(Generator(gen["upper_limit"], gen["lower_limit"], gen["precission"]))
     for model_id in device.model_ids:
         model = resource.read_model(model_id)
         if model.category == "DATA":
-            generator = []
-            if str(device.id) in generators:
-                for gen in generators[str(device.id)]:
-                    generator.append(Generator(gen["upper_limit"], gen["lower_limit"], gen["precission"]))
-            device_map.append(DeviceMap(device.id, model_id, device.type_name, generator))
+            device_map.append(DeviceMap(device.id, model_id, device.type_name, gens))
 
 for device in device_map:
     print(device)
 
 
+period = int(GATEWAY["period_time"])
+time_log = (int(time.time()) // period) * period + period
+
 while True:
 
-    if int(time.time()) % GATEWAY["period_time"] != 0:
+    # Wait until the begining of logging period
+    time_now = time.time()
+    if time_now < time_log:
+        time.sleep(min(0.05, time_log - time_now))
         continue
+    # Update log time for next period
+    time_log += period
     now = datetime.now().replace(microsecond=0)
     now_str = now.strftime("%Y-%m-%d %H:%M:%S")
 
@@ -102,6 +109,3 @@ while True:
 
         except Exception as error:
             print(error)
-
-    while int(time.time()) % GATEWAY["period_time"] == 0:
-        pass

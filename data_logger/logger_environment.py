@@ -7,7 +7,7 @@ from bme280 import BME280
 import time
 from datetime import datetime
 from uuid import UUID
-from bbthings_grpc import Auth, Resource
+from bbthings_grpc import Resource
 import config
 
 
@@ -72,10 +72,19 @@ for device in device_map:
     bme280.get_pressure()
 time.sleep(0.1)
 
+
+period = int(GATEWAY["period_time"])
+time_log = (int(time.time()) // period) * period + period
+
 while True:
 
-    if int(time.time()) % GATEWAY["period_time"] != 0:
+    # Wait until the begining of logging period
+    time_now = time.time()
+    if time_now < time_log:
+        time.sleep(min(0.05, time_log - time_now))
         continue
+    # Update log time for next period
+    time_log += period
     now = datetime.now().replace(microsecond=0)
     now_str = now.strftime("%Y-%m-%d %H:%M:%S")
 
@@ -95,6 +104,3 @@ while True:
 
         except Exception as error:
             print(error)
-
-    while int(time.time()) % GATEWAY["period_time"] == 0:
-        pass

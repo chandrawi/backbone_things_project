@@ -5,7 +5,7 @@ from dataclasses import dataclass
 import time
 from datetime import datetime
 from uuid import UUID
-from bbthings_grpc import Auth, Resource
+from bbthings_grpc import Resource
 from pymodbus.client import ModbusSerialClient
 import config
 
@@ -51,22 +51,29 @@ print("refresh_token = {}".format(resource.refresh_token))
 device_map: list[DeviceMap] = []
 devices = resource.list_device_by_gateway(UUID(gateway_id))
 for device in devices:
-    if device.id != device.gateway_id: # filter out gateway
-        slave_id = None
-        for conf in device.configs:
-            if conf.name == "slave_id":
-                slave_id = conf.value
-        for model_id in device.model_ids:
-            model = resource.read_model(model_id)
-            if model.category == "RAW" and slave_id != None:
-                device_map.append(DeviceMap(slave_id, device.id, model_id, device.type_name))
+    if device.id == device.gateway_id: # filter out gateway
+        continue
+    slave_id = next((conf.value for conf in device.configs if conf.name == "slave_id"), None)
+    for model_id in device.model_ids:
+        model = resource.read_model(model_id)
+        if model.category == "RAW" and slave_id != None:
+            device_map.append(DeviceMap(slave_id, device.id, model_id, device.type_name))
 for device in device_map:
     print(device)
 
+
+period = int(GATEWAY["period_time"])
+time_log = (int(time.time()) // period) * period + period
+
 while True:
 
-    if int(time.time()) % GATEWAY["period_time"] != 0:
+    # Wait until the begining of logging period
+    time_now = time.time()
+    if time_now < time_log:
+        time.sleep(min(0.05, time_log - time_now))
         continue
+    # Update log time for next period
+    time_log += period
     now = datetime.now().replace(microsecond=0)
     now_str = now.strftime("%Y-%m-%d %H:%M:%S")
 
@@ -104,6 +111,3 @@ while True:
 
         finally:
             client.close()
-
-    while int(time.time()) % GATEWAY["period_time"] == 0:
-        pass

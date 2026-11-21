@@ -5,8 +5,7 @@ from dataclasses import dataclass
 import time
 from datetime import datetime
 from uuid import UUID
-import grpc
-from bbthings_grpc import Auth, Resource, DeviceSchema
+from bbthings_grpc import Resource
 import config
 import random
 
@@ -53,42 +52,55 @@ print("refresh_token = {}".format(resource.refresh_token))
 device_map: list[DeviceMap] = []
 devices = resource.list_device_by_gateway(UUID(gateway_id))
 for device in devices:
-    upper_limits = {}
-    lower_limits = {}
-    precissions = {}
-    if device.id != device.gateway_id: # filter out gateway
-        for conf in device.configs:
-            if "upper_limit" in conf.name:
-                upper_limits[conf.name] = conf.value
-            elif "lower_limit" in conf.name:
-                lower_limits[conf.name] = conf.value
-            elif "precission" in conf.name:
-                precissions[conf.name] = conf.value
-        for model_id in device.model_ids:
-            model = resource.read_model(model_id)
-            if model.category == "GENERATOR":
-                upper_limits = list(dict(sorted(upper_limits.items())).values())
-                lower_limits = list(dict(sorted(lower_limits.items())).values())
-                precissions = list(dict(sorted(precissions.items())).values())
-                length = max(len(upper_limits), len(lower_limits), len(precissions))
-                generators = []
-                for i in range(length):
-                    upper_limit = 1
-                    if len(upper_limits) > i: upper_limit = upper_limits[i]
-                    lower_limit = -1
-                    if len(lower_limits) > i: lower_limit = lower_limits[i]
-                    precission = None
-                    if len(precissions) > i: precission = precissions[i]
-                    generators.append(Generator(upper_limit, lower_limit, precission))
-                device_map.append(DeviceMap(device.id, model_id, device.type_name, generators))
+    generators: list[Generator] = []
+    upper_limits: dict[str, int | float] = {}
+    lower_limits: dict[str, int | float] = {}
+    precissions: dict[str, int | None] = {}
+    names: list[str] = []
+    if device.id == device.gateway_id: # filter out gateway
+        continue
+    for conf in device.configs:
+        if "upper_limit" in conf.name:
+            upper_limits[conf.name[12:]] = conf.value
+            names.append(conf.name[12:])
+        elif "lower_limit" in conf.name:
+            lower_limits[conf.name[12:]] = conf.value
+            names.append(conf.name[12:])
+        elif "precission" in conf.name:
+            precissions[conf.name[11:]] = conf.value
+            names.append(conf.name[11:])
+    for name in list(dict.fromkeys(names)):
+        upper_limit = 1
+        lower_limit = -1
+        precission = None
+        if name in upper_limits:
+            upper_limit = upper_limits[name]
+        if name in lower_limits:
+            lower_limit = lower_limits[name]
+        if name in precissions:
+            precission = precissions[name]
+        generators.append(Generator(upper_limit, lower_limit, precission))
+    for model_id in device.model_ids:
+        model = resource.read_model(model_id)
+        if model.category == "GENERATOR":
+            device_map.append(DeviceMap(device.id, model_id, device.type_name, generators))
 
 for device in device_map:
     print(device)
 
+
+period = int(GATEWAY["period_time"])
+time_log = (int(time.time()) // period) * period + period
+
 while True:
 
-    if int(time.time()) % GATEWAY["period_time"] != 0:
+    # Wait until the begining of logging period
+    time_now = time.time()
+    if time_now < time_log:
+        time.sleep(min(0.05, time_log - time_now))
         continue
+    # Update log time for next period
+    time_log += period
     now = datetime.now().replace(microsecond=0)
     now_str = now.strftime("%Y-%m-%d %H:%M:%S")
 
@@ -116,6 +128,3 @@ while True:
 
         except Exception as error:
             print(error)
-
-    while int(time.time()) % GATEWAY["period_time"] == 0:
-        pass

@@ -6,7 +6,7 @@ from INA3221_linux import INA3221
 import time
 from datetime import datetime
 from uuid import UUID
-from bbthings_grpc import Auth, Resource
+from bbthings_grpc import Resource
 import config
 
 
@@ -55,23 +55,12 @@ print("refresh_token = {}".format(resource.refresh_token))
 
 # read device associated with configured gateway
 device_schema = resource.read_device(UUID(gateway_id))
-address = 0x00
-resistors = [0.1, 0.1, 0.1]
-conv_avg = 0x00
-conv_time = 0x04
-for conf in device_schema.configs:
-    if conf.name == "smbus_address":
-        address = conf.value
-    elif conf.name == "resistor_0":
-        resistors[0] = conf.value
-    elif conf.name == "resistor_1":
-        resistors[1] = conf.value
-    elif conf.name == "resistor_2":
-        resistors[2] = conf.value
-    elif conf.name == "conversion_average":
-        conv_avg = conf.value
-    elif conf.name == "conversion_time":
-        conv_time = conf.value
+address = next((conf.value for conf in device_schema.configs if conf.name == "smbus_address"), 0x00)
+resistor_0 = next((conf.value for conf in device_schema.configs if conf.name == "resistor_0"), 0.1)
+resistor_1 = next((conf.value for conf in device_schema.configs if conf.name == "resistor_1"), 0.1)
+resistor_2 = next((conf.value for conf in device_schema.configs if conf.name == "resistor_2"), 0.1)
+conv_avg = next((conf.value for conf in device_schema.configs if conf.name == "conversion_average"), 0x00)
+conv_time = next((conf.value for conf in device_schema.configs if conf.name == "conversion_time"), 0x04)
 for model_id in device_schema.model_ids:
     model = resource.read_model(model_id)
     if model.category == "DATA": break
@@ -84,9 +73,9 @@ device = DeviceMap(device_schema.id, model_id, device_schema.type_name, ina3221,
 if not ina3221.begin():
     print("Could not connect. Fix and Reboot")
 # Set custom shunt resistors
-ina3221.set_shunt_resistor(0, resistors[0])
-ina3221.set_shunt_resistor(0, resistors[1])
-ina3221.set_shunt_resistor(0, resistors[2])
+ina3221.set_shunt_resistor(0, resistor_0)
+ina3221.set_shunt_resistor(1, resistor_1)
+ina3221.set_shunt_resistor(2, resistor_2)
 # Set conversion configuration
 ina3221.set_average(conv_avg)
 ina3221.set_bus_voltage_conversion_time(conv_time)
@@ -97,14 +86,21 @@ print("DEVICES:")
 print(f"{device.id}    {device.model}    {device.type}")
 print()
 
-t_monitor = time.time()
-t_monitor = t_monitor - (t_monitor % GATEWAY["period_monitor"])
-t_logger = time.time()
-t_logger = t_logger - (t_logger % GATEWAY["period_time"])
 
+period_mon = int(GATEWAY["period_monitor"])
+time_mon = (int(time.time()) // period_mon) * period_mon + period_mon
+period_log = int(GATEWAY["period_time"])
+time_log = (int(time.time()) // period_log) * period_log + period_log
 
 while True:
 
+    # Wait until the begining of monitoring period
+    time_now = time.time()
+    if time_now < time_mon:
+        time.sleep(min(0.05, time_mon - time_now))
+        continue
+    # Update monitoring time for next period
+    time_mon += period_mon
     now = datetime.now().replace(microsecond=0)
     now_str = now.strftime("%Y-%m-%d %H:%M:%S")
 
@@ -119,8 +115,8 @@ while True:
     # print(f"{now_str}    {device.data.counter}")
 
     # Average accumulated voltage and current measurement within a period of time
-    if time.time() >= (t_logger + GATEWAY["period_time"]):
-        t_logger += GATEWAY["period_time"]
+    if time_now >= time_log:
+        time_log += period_log
         voltage_0 = device.data.voltage_0 / device.data.counter
         current_0 = device.data.current_0 / device.data.counter
         voltage_1 = device.data.voltage_1 / device.data.counter
@@ -131,14 +127,10 @@ while True:
 
         # Create buffer with data from voltage and current average data
         try:
-            data = [GATEWAY["period_time"], voltage_0, current_0, voltage_1, current_1, voltage_2, current_2]
+            data = [period_log, voltage_0, current_0, voltage_1, current_1, voltage_2, current_2]
             resource.create_buffer(device.id, device.model, now, data, config.STATUS['logger_power_end'])
             print(f"{now_str}    {voltage_0:6.3f}    {current_0:6.3f}    {voltage_1:6.3f}    {current_1:6.3f}    {voltage_2:6.3f}    {current_2:6.3f}")
         except Exception as error:
             print(error)
 
-    # print(f"{now_str}    {t_monitor}    {t_logger}")
-
-    t_monitor += GATEWAY["period_monitor"]
-    while time.time() < t_monitor:
-        pass
+    # print(f"{now_str}    {int(time_now)}    {time_mon}    {time_log}")
