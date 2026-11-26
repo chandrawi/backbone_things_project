@@ -6,7 +6,7 @@ import time
 from datetime import datetime
 from uuid import UUID
 import grpc
-from bbthings_grpc import Auth, Resource, DeviceSchema
+from bbthings_grpc import Resource, DeviceSchema
 import config
 from LoRaRF import SX126x, LoRaSpi, LoRaGpio
 
@@ -128,9 +128,9 @@ for device in devices:
                 node_id = conf.value
             elif conf.name == "data_length":
                 length = conf.value
-            elif conf.name == "period_time":
+            elif conf.name == "time_period":
                 period = conf.value
-            elif conf.name == "offset_time":
+            elif conf.name == "time_offset":
                 offset = conf.value
         for model_id in device.model_ids:
             model = resource.read_model(model_id)

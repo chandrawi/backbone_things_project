@@ -107,7 +107,11 @@ STATUS = {
 
 EXTERNAL_API = {
     "token": "CUNeYi2wBCFKtsC4CbVbiOnoeYY89yKC",
-    "url": "http://batubara.koneksi.cloud:8080/api/v1/report-start-finish"
+    "uid": "90b9077d18e204c3325a917c",
+    "key": "5p4r1n6.gea9o",
+    "period": 3600,
+    "set_id": "0944dd19-a398-495a-bfc1-b5899ce4056c",
+    "url": "https://dummy.geotren.com/api/send-hourly-vendor"
 }
 
 GENERATOR_CONFIG = {
